@@ -1,9 +1,9 @@
-# pip install matplotlib 를 명령프롬프트에 입력하여 설치 -> 그래프 보기
+# pip install matplotlib 를 명령프롬프트에 입력하여 설치 => 그래프 보기
 
 # pip install speechrecognition
 # pip install pyaudio  # 설치 오류 시 → pip install pipwin && pipwin install pyaudio
 # pip install matplotlib
-# 위의 세개를 명령프롬프트에 입력하여 설치 -> 음성 인식
+# 위의 세개를 명령프롬프트에 입력하여 설치 => 음성 인식
 
 ## 지출 관리 프로그램
 # 지출 추가
@@ -16,29 +16,30 @@
 # 지출 그래프 보기
 # 음성으로 지출 추가
 
-# 지출 관리 프로그램을 보면 음성으로 인식해서 자동으로 입력되게 하는 것을 
+import csv  # CSV 파일 읽고 쓰기 위해
+import os  # 파일 존재 여부 확인 위해
+from datetime import datetime  # 날짜 형식 검사, 처리 위해
+import matplotlib.pyplot as plt  # 그래프 그리기 위해
+import matplotlib.font_manager as fm  # 한글 폰트 설정 위해
+import speech_recognition as sr  # 음성 인식 기능 위해
+import re  # 정규식으로 음성 텍스트 파싱 위해
 
-import csv
-import os
-from datetime import datetime
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-import speech_recognition as sr
-import re
-
-# 한글 폰트 설정
+# 한글 폰트 설정 (그래프에서 한글 깨짐 방지)
 font_path = "C:/Windows/Fonts/malgun.ttf"
 fontprop = fm.FontProperties(fname=font_path)
 plt.rc('font', family=fontprop.get_name())
 
+# 데이터 파일 이름 지정
 DATA_FILE = "spend_data.csv"
 
+# 프로그램 시작 시 파일이 없으면 새로 생성
 def init_file():
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
             writer.writerow(["날짜", "항목", "금액"])
 
+# 1. 지출 추가 (직접 입력)
 def add_expense():
     while True:
         date = input("날짜 (YYYY-MM-DD): ").strip()
@@ -59,6 +60,7 @@ def add_expense():
         writer.writerow([date, item, amount])
     print("저장되었습니다.\n")
 
+# 2. 전체 지출 보기
 def show_all():
     if not os.path.exists(DATA_FILE):
         print("아직 기록이 없습니다.\n")
@@ -93,7 +95,7 @@ def show_all():
         print(f"- {row[0]} | {row[1]} | {row[2]}원")
     print()
 
-
+# 3. 총 지출 확인 및 항목별 합계
 def total_spent():
     if not os.path.exists(DATA_FILE):
         print("아직 기록이 없습니다.\n")
@@ -117,6 +119,7 @@ def total_spent():
         print(f"- {category}: {amt}원")
     print()
 
+# 4. 지출 삭제
 def delete_expense():
     if not os.path.exists(DATA_FILE):
         print("아직 기록이 없습니다.\n")
@@ -145,6 +148,7 @@ def delete_expense():
     else:
         print("해당 지출을 찾을 수 없습니다.\n")
 
+# 5. 지출 수정
 def edit_expense():
     if not os.path.exists(DATA_FILE):
         print("아직 기록이 없습니다.\n")
@@ -192,6 +196,7 @@ def edit_expense():
     else:
         print("해당 지출을 찾을 수 없습니다.\n")
 
+# 6. 연간 지출 비교
 def annual_comparison():
     if not os.path.exists(DATA_FILE):
         print("기록 없음.\n")
@@ -212,6 +217,7 @@ def annual_comparison():
         print(f"- {year}년: {year_totals[year]}원")
     print()
 
+# 7. 지출 검색
 def search_expenses():
     if not os.path.exists(DATA_FILE):
         print("기록 없음.\n")
@@ -232,6 +238,7 @@ def search_expenses():
         print("해당 결과 없음.\n")
     print()
 
+# 8. 지출 그래프 보기
 def show_graph():
     if not os.path.exists(DATA_FILE):
         print("기록 없음.\n")
@@ -253,7 +260,7 @@ def show_graph():
     if not year_month_totals:
         print("시각화할 데이터 없음.\n")
         return
-
+# 월별 평균 계산
     year_totals = {}
     year_counts = {}
     for ym, total in year_month_totals.items():
@@ -288,6 +295,7 @@ def show_graph():
     plt.tight_layout()
     plt.show()
 
+# 9. 음성 인식으로 지출 기록
 def recognize_speech():
     r = sr.Recognizer()
     with sr.Microphone() as source:
@@ -303,6 +311,7 @@ def recognize_speech():
         print("⚠️ Google 음성 인식 서비스 연결 실패.")
     return None
 
+# 10. 음성 인식된 문장을 날짜/항목/금액으로 분리
 def parse_voice_input(text):
     date_match = re.search(r"(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일", text)
     if not date_match:
@@ -320,6 +329,7 @@ def parse_voice_input(text):
         print("⚠️ 항목 또는 금액 인식 실패")
         return None
 
+# 11. 음성으로 지출 입력
 def voice_expense_entry():
     speech = recognize_speech()
     if speech:
@@ -334,6 +344,7 @@ def voice_expense_entry():
         else:
             print("⚠️ 음성에서 날짜/항목/금액을 인식하지 못했습니다.\n")
 
+# 12. 지출 패턴 분석 및 그래프
 def analyze_patterns():
     if not os.path.exists(DATA_FILE):
         print("기록이 없습니다.\n")
@@ -377,7 +388,7 @@ def analyze_patterns():
         print(f"- {ym}: 총 {monthly_totals[ym]}원, {monthly_counts[ym]}회, 평균 {avg:.0f}원")
     print()
     
-    # 월별 평균 지출 시각화
+# 그래프 출력
     months = sorted_months
     averages = [monthly_totals[m] / monthly_counts[m] for m in months]
     
@@ -391,6 +402,7 @@ def analyze_patterns():
     plt.tight_layout()
     plt.show()
 
+# 메뉴 출력
 def menu():
     print("""
 ==지출 관리 프로그램==
@@ -438,5 +450,6 @@ def main():
         else:
             print("잘못된 입력입니다. 다시 선택해주세요.\n")
 
+# 이 파일이 직접 실행될 경우 main() 실행
 if __name__ == "__main__":
     main()
